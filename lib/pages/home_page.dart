@@ -16,6 +16,7 @@ class _HomePageState extends State<HomePage> {
 
   String selectedCategory = "Semua";
   int currentIndex = 0;
+  String search = "";
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +47,16 @@ class _HomePageState extends State<HomePage> {
 
       body: Column(
         children: [
-          // 🔍 SEARCH BAR
+
+          // 🔍 SEARCH
           Padding(
             padding: const EdgeInsets.all(15),
             child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  search = value.toLowerCase();
+                });
+              },
               decoration: InputDecoration(
                 hintText: "Cari hotel...",
                 prefixIcon: const Icon(Icons.search),
@@ -63,7 +70,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // 🔴 KATEGORI HOTEL
+          // 🔴 KATEGORI
           Container(
             height: 60,
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -80,7 +87,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // 🔥 DATA HOTEL FIRESTORE
+          // 🔥 DATA FIRESTORE
           Expanded(
             child: StreamBuilder(
               stream: service.getHotels(),
@@ -97,36 +104,51 @@ class _HomePageState extends State<HomePage> {
                   return const Center(child: Text("Belum ada data hotel"));
                 }
 
-                var data = snapshot.data!.docs;
+                List data = snapshot.data!.docs;
 
                 // 🔍 FILTER
-                var filtered = data.where((doc) {
+                List filtered = data.where((doc) {
                   var h = doc.data() as Map<String, dynamic>;
 
-                  if (selectedCategory == "Semua") return true;
+                  // kategori
+                  if (selectedCategory != "Semua") {
+                    if (h['category']
+                            ?.toString()
+                            .toLowerCase() !=
+                        selectedCategory.toLowerCase()) {
+                      return false;
+                    }
+                  }
 
-                  return h['category']
-                          ?.toString()
-                          .toLowerCase() ==
-                      selectedCategory.toLowerCase();
+                  // search
+                  if (search.isNotEmpty) {
+                    return h['name']
+                        .toString()
+                        .toLowerCase()
+                        .contains(search);
+                  }
+
+                  return true;
                 }).toList();
 
                 return ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 15),
-                  children: filtered.map((doc) {
-                    var h = doc.data() as Map<String, dynamic>;
+                  children: List<Widget>.from(
+                    filtered.map((doc) {
+                      var h = doc.data() as Map<String, dynamic>;
 
-                    return _buildHotelCard(
-                      context,
-                      h['name'] ?? "Tanpa Nama",
-                      h['category'] ?? "Hotel",
-                      h['desc'] ?? "Tidak ada deskripsi",
-                      h['location'] ?? "Palembang",
-                      h['price'] ?? "Rp 0",
-                      h['image'] ?? "https://picsum.photos/400/200",
-                      _getColor(h['category']),
-                    );
-                  }).toList(),
+                      return _buildHotelCard(
+                        context,
+                        h['name'] ?? "Tanpa Nama",
+                        h['category'] ?? "Hotel",
+                        h['desc'] ?? "Tidak ada deskripsi",
+                        h['location'] ?? "Palembang",
+                        h['price'] ?? "Rp 0",
+                        h['image'] ?? "https://picsum.photos/400/200",
+                        _getColor(h['category']),
+                      );
+                    }),
+                  ),
                 );
               },
             ),
@@ -134,12 +156,12 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      // ➕ POST HOTEL
+      // ➕ TAMBAH
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => PostPage()),
+            MaterialPageRoute(builder: (_) => const PostPage()),
           );
         },
         backgroundColor: const Color(0xFFFFB300),
@@ -223,7 +245,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 🏨 CARD HOTEL
+  // 🏨 CARD
   Widget _buildHotelCard(BuildContext context, String title, String tag,
       String desc, String location, String price, String imgUrl, Color tagColor) {
     return Container(
@@ -248,6 +270,11 @@ class _HomePageState extends State<HomePage> {
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 200,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image),
+                  ),
                 ),
               ),
               Positioned(
@@ -300,7 +327,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 🎨 WARNA TAG
   Color _getColor(String? category) {
     switch (category) {
       case "Hotel":
