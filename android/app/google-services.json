@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "328940121783",
+    "firebase_url": "https://hotel-palembang-default-rtdb.firebaseio.com",
+    "project_id": "hotel-palembang",
+    "storage_bucket": "hotel-palembang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328940121783:android:46e33c4510098123d2e732",
+        "android_client_info": {
+          "package_name": "com.example.hotel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD3U57AI5gWjbAybUg1_dQvWKL1UMSNBU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328940121783:android:89864f088497ac0ad2e732",
+        "android_client_info": {
+          "package_name": "com.example.hotel_palembang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD3U57AI5gWjbAybUg1_dQvWKL1UMSNBU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
