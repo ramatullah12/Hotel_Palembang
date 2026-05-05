@@ -4,7 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import '../services/firestore_service.dart';
 
 class PostPage extends StatefulWidget {
-  const PostPage({super.key});
+  final Map<String, dynamic>? existingHotel;
+  final String? docId;
+
+  const PostPage({super.key, this.existingHotel, this.docId});
 
   @override
   State<PostPage> createState() => _PostPageState();
@@ -21,6 +24,21 @@ class _PostPageState extends State<PostPage> {
   String selectedCategory = "Hotel";
   bool isLoading = false;
 
+  bool get isEditing => widget.existingHotel != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditing) {
+      name.text = widget.existingHotel!['name'] ?? '';
+      desc.text = widget.existingHotel!['desc'] ?? '';
+      location.text = widget.existingHotel!['location'] ?? '';
+      price.text = widget.existingHotel!['price'] ?? '';
+      selectedCategory = widget.existingHotel!['category'] ?? 'Hotel';
+      _imageBase64 = widget.existingHotel!['image'];
+    }
+  }
+
   final List<String> categories = [
     "Hotel",
     "Resort",
@@ -36,6 +54,8 @@ class _PostPageState extends State<PostPage> {
       final picked = await picker.pickImage(
         source: source,
         imageQuality: 50,
+        maxWidth: 800,
+        maxHeight: 800,
       );
 
       if (picked != null) {
@@ -138,7 +158,7 @@ class _PostPageState extends State<PostPage> {
     });
 
     try {
-      await service.addHotel({
+      final data = {
         "name": name.text,
         "desc": desc.text,
         "location": location.text,
@@ -146,13 +166,19 @@ class _PostPageState extends State<PostPage> {
         "category": selectedCategory,
         "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
         "author": "User"
-      });
+      };
+
+      if (isEditing && widget.docId != null) {
+        await service.updateHotel(widget.docId!, data);
+      } else {
+        await service.addHotel(data);
+      }
 
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Upload gagal")),
+          SnackBar(content: Text("Upload gagal: $e")),
         );
       }
     } finally {
@@ -168,7 +194,7 @@ class _PostPageState extends State<PostPage> {
       backgroundColor: const Color(0xFFF5F1EE),
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
-        title: const Text("Tambah Hotel", style: TextStyle(color: Colors.white)),
+        title: Text(isEditing ? "Edit Hotel" : "Tambah Hotel", style: const TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           TextButton(

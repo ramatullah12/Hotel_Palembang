@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import '../services/firestore_service.dart';
 import '../pages/favorite_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/post_page.dart';
+import '../pages/detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -138,15 +140,27 @@ class _HomePageState extends State<HomePage> {
                     filtered.map((doc) {
                       var h = doc.data() as Map<String, dynamic>;
 
-                      return _buildHotelCard(
-                        context,
-                        h['name'] ?? "Tanpa Nama",
-                        h['category'] ?? "Hotel",
-                        h['desc'] ?? "Tidak ada deskripsi",
-                        h['location'] ?? "Palembang",
-                        h['price'] ?? "Rp 0",
-                        h['image'] ?? "https://picsum.photos/400/200",
-                        _getColor(h['category']),
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DetailPage(data: h, docId: doc.id),
+                            ),
+                          );
+                        },
+                        child: _buildHotelCard(
+                          context,
+                          h['name'] ?? "Tanpa Nama",
+                          h['category'] ?? "Hotel",
+                          h['desc'] ?? "Tidak ada deskripsi",
+                          h['location'] ?? "Palembang",
+                          h['price'] ?? "Rp 0",
+                          h['image'] ?? "https://picsum.photos/400/200",
+                          _getColor(h['category']),
+                          h,
+                          doc.id,
+                        ),
                       );
                     }),
                   ),
@@ -248,7 +262,7 @@ class _HomePageState extends State<HomePage> {
 
   // 🏨 CARD
   Widget _buildHotelCard(BuildContext context, String title, String tag,
-      String desc, String location, String price, String imgUrl, Color tagColor) {
+      String desc, String location, String price, String imgUrl, Color tagColor, Map<String, dynamic> h, String docId) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -303,6 +317,54 @@ class _HomePageState extends State<HomePage> {
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold)),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance.collection('favorites').doc(docId).snapshots(),
+                  builder: (context, snapshot) {
+                    bool isFavorite = snapshot.hasData && snapshot.data != null && snapshot.data!.exists;
+
+                    return Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white70,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: Colors.red,
+                        ),
+                        onPressed: () async {
+                          try {
+                            if (isFavorite) {
+                              await FirestoreService().deleteFavorite(docId);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Dihapus dari Favorit!")),
+                                );
+                              }
+                            } else {
+                              await FirestoreService().addFavorite(docId, h);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Ditambahkan ke Favorit!")),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Gagal: $e")),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

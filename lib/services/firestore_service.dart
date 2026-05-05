@@ -24,8 +24,8 @@ class FirestoreService {
   }
 
   // ❤️ TAMBAH FAVORIT
-  Future<void> addFavorite(Map<String, dynamic> data) async {
-    await db.collection('favorites').add(data);
+  Future<void> addFavorite(String id, Map<String, dynamic> data) async {
+    await db.collection('favorites').doc(id).set(data);
   }
 
   // 🔥 GET FAVORIT

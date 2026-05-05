@@ -23,7 +23,7 @@ class FavoritePage extends StatelessWidget {
         stream: service.getFavorite(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(child: Text("Terjadi error"));
+            return Center(child: Text("Terjadi error: ${snapshot.error}"));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -41,6 +41,9 @@ class FavoritePage extends StatelessWidget {
             itemCount: data.length,
             itemBuilder: (context, i) {
               var f = data[i].data() as Map<String, dynamic>;
+              String imgUrl = f['image'] != null && f['image'].toString().isNotEmpty 
+                  ? f['image'] 
+                  : "https://picsum.photos/400/200";
 
               return GestureDetector(
                 onTap: () {
@@ -48,7 +51,7 @@ class FavoritePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => DetailPage(data: f),
+                      builder: (_) => DetailPage(data: f, docId: data[i].id),
                     ),
                   );
                 },
@@ -74,9 +77,9 @@ class FavoritePage extends StatelessWidget {
                           ClipRRect(
                             borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(20)),
-                            child: (f['image'] ?? "").startsWith('http')
+                            child: imgUrl.startsWith('http')
                                 ? Image.network(
-                                    f['image'] ?? "",
+                                    imgUrl,
                                     height: 200,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
@@ -87,7 +90,7 @@ class FavoritePage extends StatelessWidget {
                                     ),
                                   )
                                 : Image.memory(
-                                    base64Decode(f['image'] ?? ""),
+                                    base64Decode(imgUrl),
                                     height: 200,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
@@ -120,10 +123,34 @@ class FavoritePage extends StatelessWidget {
                           ),
 
                           // ICON FAVORIT
-                          const Positioned(
+                          Positioned(
                             top: 10,
                             right: 10,
-                            child: Icon(Icons.favorite, color: Colors.red),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white70,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.favorite, color: Colors.red),
+                                onPressed: () async {
+                                  try {
+                                    await service.deleteFavorite(data[i].id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text("Dihapus dari Favorit!")),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Gagal: $e")),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
