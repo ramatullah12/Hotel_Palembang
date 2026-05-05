@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../services/firestore_service.dart';
-import 'favorite_page.dart';
-import 'profile_page.dart';
-import 'post_page.dart';
+import '../pages/favorite_page.dart';
+import '../pages/profile_page.dart';
+import '../pages/post_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -265,17 +266,29 @@ class _HomePageState extends State<HomePage> {
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.network(
-                  imgUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image),
-                  ),
-                ),
+                child: imgUrl.startsWith('http')
+                    ? Image.network(
+                        imgUrl,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image),
+                        ),
+                      )
+                    : Image.memory(
+                        base64Decode(imgUrl),
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.image),
+                        ),
+                      ),
               ),
               Positioned(
                 top: 10,

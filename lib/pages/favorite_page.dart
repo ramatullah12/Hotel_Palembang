@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../services/firestore_service.dart';
 import 'detail_page.dart';
 
@@ -73,17 +74,29 @@ class FavoritePage extends StatelessWidget {
                           ClipRRect(
                             borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(20)),
-                            child: Image.network(
-                              f['image'] ?? "",
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                height: 200,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.image),
-                              ),
-                            ),
+                            child: (f['image'] ?? "").startsWith('http')
+                                ? Image.network(
+                                    f['image'] ?? "",
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      height: 200,
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.image),
+                                    ),
+                                  )
+                                : Image.memory(
+                                    base64Decode(f['image'] ?? ""),
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      height: 200,
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.image),
+                                    ),
+                                  ),
                           ),
 
                           // TAG KATEGORI

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import 'contact_page.dart';
-import 'login_page.dart';
+import '../screens/login_screen.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
