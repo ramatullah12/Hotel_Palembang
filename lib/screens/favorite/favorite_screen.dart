@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../services/firestore_service.dart';
-import 'detail_page.dart';
+import '../pages/detail_page.dart';
 
 class FavoritePage extends StatelessWidget {
   final service = FirestoreService();
