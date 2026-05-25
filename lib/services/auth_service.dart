@@ -13,7 +13,7 @@ class AuthService {
     await auth.createUserWithEmailAndPassword(email: email, password: pass);
   }
 
-  void logout() async {
+  Future<void> logout() async {
     await auth.signOut();
   }
 }

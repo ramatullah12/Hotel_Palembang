@@ -1,196 +1,301 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/auth_service.dart';
-import 'contact_page.dart';
-import '../screens/login_screen.dart';
-import 'edit_profile_page.dart';
+import '../../services/auth_service.dart';
+import 'contact_screen.dart';
+import 'edit_profile_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProfilePage extends StatelessWidget {
-  final auth = AuthService();
-  final user = FirebaseAuth.instance.currentUser;
-
-  ProfilePage({super.key});
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AuthService auth = AuthService();
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Belum login')),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1EE),
+      backgroundColor: const Color(0xFFFDF7F5),
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
-        title: const Text("Profil Saya"),
+        title: const Text(
+          'Profil Saya',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
 
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .doc(user!.uid)
+            .doc(user.uid)
             .snapshots(),
         builder: (context, snapshot) {
-
-          // 🔄 LOADING
+          // LOADING
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // ❌ ERROR
+          // ERROR
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          // ❌ BELUM ADA DATA
+          // BELUM ADA PROFIL
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Profil belum diisi"),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
+              child: Padding(
+                padding: const EdgeInsets.all(30),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Color(0xFFFFEBEE),
+                      child: Icon(Icons.person,
+                          size: 50, color: Color(0xFFC62828)),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      user.email ?? 'User',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500, fontSize: 15),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Profil belum diisi',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const EditProfilePage(),
-                        ),
-                      );
-                    },
-                    child: const Text("Isi Profil"),
-                  )
-                ],
+                            builder: (_) => const EditProfilePage()),
+                      ),
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Lengkapi Profil'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC62828),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
-          // ✅ AMBIL DATA
-          var data = snapshot.data!.data() as Map<String, dynamic>;
+          final data = snapshot.data!.data() as Map<String, dynamic>;
 
           return SingleChildScrollView(
             child: Column(
               children: [
-
-                // 🔥 HEADER
+                // ── HEADER PROFIL ──────────────────────────
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 36, horizontal: 20),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Color(0xFFC62828),
-                        Color(0xFFF5F1EE),
-                      ],
+                      colors: [Color(0xFFC62828), Color(0xFFEF9A9A)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                   ),
                   child: Column(
                     children: [
-
-                      // FOTO
+                      // Avatar
                       Stack(
                         children: [
                           const CircleAvatar(
-                            radius: 50,
-                            child: Icon(Icons.person, size: 50),
+                            radius: 52,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.person,
+                                size: 52, color: Color(0xFFC62828)),
                           ),
                           Positioned(
                             bottom: 0,
                             right: 0,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+                            child: GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const EditProfilePage()),
                               ),
-                              padding: const EdgeInsets.all(6),
-                              child: const Icon(Icons.edit,
-                                  size: 16, color: Colors.white),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.edit,
+                                    size: 16, color: Color(0xFFC62828)),
+                              ),
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 14),
 
-                      // 🔥 NAMA (FIRESTORE)
+                      // Nama
                       Text(
-                        data['name'] ?? "User",
+                        data['name'] ?? 'User',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 4),
 
-                      // 🔥 EMAIL
+                      // Email
                       Text(
-                        data['email'] ?? "",
-                        style: const TextStyle(color: Colors.grey),
+                        data['email'] ?? user.email ?? '',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 14),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
-                      // 🔥 BIO
-                      Text(
-                        data['bio'] ?? "",
-                        style: const TextStyle(color: Colors.black54),
-                      ),
+                      // Bio
+                      if ((data['bio'] ?? '').toString().isNotEmpty)
+                        Text(
+                          data['bio'],
+                          style: const TextStyle(
+                              color: Colors.white60, fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
 
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 16),
 
-                      // 🔘 EDIT BUTTON
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const EditProfilePage(),
-                            ),
-                          );
-                        },
-                        child: const Text("Edit Profil"),
+                      // Tombol Edit
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const EditProfilePage()),
+                        ),
+                        icon: const Icon(Icons.edit,
+                            color: Colors.white, size: 16),
+                        label: const Text('Edit Profil',
+                            style: TextStyle(color: Colors.white)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white54),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                        ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
-                // 📞 KONTAK
-                ListTile(
-                  leading: const Icon(Icons.contact_page),
-                  title: const Text("Kontak"),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ContactPage(),
+                // ── MENU LIST ─────────────────────────────
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _menuTile(
+                        Icons.contact_page_outlined,
+                        'Kontak Developer',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const ContactPage()),
+                        ),
                       ),
-                    );
-                  },
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      _menuTile(
+                        Icons.info_outline,
+                        'Tentang Aplikasi',
+                        onTap: () => _showAboutDialog(context),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      _menuTile(
+                        Icons.logout,
+                        'Keluar',
+                        color: Colors.red,
+                        onTap: () async {
+                          await auth.logout();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginPage()),
+                              (route) => false,
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
-                // 🚪 LOGOUT
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text("Logout"),
-                  onTap: () {
-                    auth.logout();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LoginPage(),
-                      ),
-                    );
-                  },
-                ),
+                const SizedBox(height: 30),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _menuTile(
+    IconData icon,
+    String title, {
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? const Color(0xFFC62828)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          color: color ?? Colors.black87,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_right,
+          color: color ?? Colors.grey.shade400),
+      onTap: onTap,
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'Hotel Palembang',
+      applicationVersion: '1.0.0',
+      applicationLegalese: '© 2026 Hotel Palembang App',
+      children: const [
+        SizedBox(height: 10),
+        Text('Aplikasi untuk menemukan dan memesan hotel terbaik di Palembang.'),
+      ],
     );
   }
 }

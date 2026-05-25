@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
-import '../services/firestore_service.dart';
-import '../pages/favorite_page.dart';
-import '../pages/profile_page.dart';
-import '../pages/post_page.dart';
-import '../pages/detail_page.dart';
+import '../../services/firestore_service.dart';
+import '../../widgets/hotel_card.dart';
+import '../favorite/favorite_screen.dart';
+import '../profile/profile_screen.dart';
+import '../post/post_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,56 +13,86 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final service = FirestoreService();
+  final FirestoreService _service = FirestoreService();
 
-  String selectedCategory = "Semua";
-  int currentIndex = 0;
-  String search = "";
+  String _selectedCategory = 'Semua';
+  String _search = '';
+  int _currentIndex = 0;
+
+  final List<Map<String, dynamic>> _categories = [
+    {'label': 'Semua', 'icon': Icons.apps},
+    {'label': 'Hotel', 'icon': Icons.hotel},
+    {'label': 'Resort', 'icon': Icons.beach_access},
+    {'label': 'Budget', 'icon': Icons.savings},
+    {'label': 'Luxury', 'icon': Icons.star},
+  ];
+
+  void _onNavTap(int index) {
+    if (index == 0) {
+      setState(() => _currentIndex = 0);
+      return;
+    }
+    if (index == 1) {
+      setState(() => _currentIndex = 1);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const FavoritePage()),
+      ).then((_) => setState(() => _currentIndex = 0));
+    }
+    if (index == 2) {
+      setState(() => _currentIndex = 2);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfilePage()),
+      ).then((_) => setState(() => _currentIndex = 0));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
 
-      // 🔴 APPBAR
+      // ── APP BAR ───────────────────────────────────────────
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
         title: const Text(
-          "Hotel Palembang",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Hotel Palembang',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         centerTitle: true,
-        leading: const Icon(Icons.menu, color: Colors.white),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => FavoritePage()),
-              );
-            },
+            icon: const Icon(Icons.favorite_border, color: Colors.white),
+            tooltip: 'Favorit',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritePage()),
+            ),
           ),
         ],
       ),
 
       body: Column(
         children: [
-
-          // 🔍 SEARCH
-          Padding(
-            padding: const EdgeInsets.all(15),
+          // ── SEARCH BAR ──────────────────────────────────
+          Container(
+            color: const Color(0xFFC62828),
+            padding: const EdgeInsets.fromLTRB(15, 0, 15, 15),
             child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  search = value.toLowerCase();
-                });
-              },
+              onChanged: (v) => setState(() => _search = v.toLowerCase()),
               decoration: InputDecoration(
-                hintText: "Cari hotel...",
-                prefixIcon: const Icon(Icons.search),
+                hintText: 'Cari hotel di Palembang...',
+                hintStyle: const TextStyle(color: Colors.black45),
+                prefixIcon: const Icon(Icons.search, color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
@@ -73,97 +101,135 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // 🔴 KATEGORI
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ListView(
+          // ── KATEGORI ────────────────────────────────────
+          SizedBox(
+            height: 52,
+            child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              children: [
-                const SizedBox(width: 15),
-                _buildCategoryItem("Semua", Icons.check),
-                _buildCategoryItem("Hotel", null),
-                _buildCategoryItem("Resort", null),
-                _buildCategoryItem("Budget", null),
-                _buildCategoryItem("Luxury", null),
-              ],
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final cat = _categories[i];
+                final isActive = _selectedCategory == cat['label'];
+                return GestureDetector(
+                  onTap: () =>
+                      setState(() => _selectedCategory = cat['label'] as String),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? const Color(0xFFC62828)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xFFC62828)
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          cat['icon'] as IconData,
+                          size: 15,
+                          color: isActive ? Colors.white : Colors.black54,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          cat['label'] as String,
+                          style: TextStyle(
+                            color:
+                                isActive ? Colors.white : Colors.black54,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 
-          // 🔥 DATA FIRESTORE
+          // ── LIST HOTEL ──────────────────────────────────
           Expanded(
             child: StreamBuilder(
-              stream: service.getHotels(),
+              stream: _service.getHotels(),
               builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
-                }
-
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                      child: CircularProgressIndicator(
+                    color: Color(0xFFC62828),
+                  ));
                 }
-
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Belum ada data hotel"));
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.hotel, size: 60, color: Colors.grey),
+                        SizedBox(height: 12),
+                        Text(
+                          'Belum ada hotel',
+                          style: TextStyle(
+                              color: Colors.grey, fontSize: 16),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Tekan + untuk menambahkan hotel',
+                          style: TextStyle(
+                              color: Colors.black38, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
-                List data = snapshot.data!.docs;
+                final docs = snapshot.data!.docs;
 
-                // 🔍 FILTER
-                List filtered = data.where((doc) {
-                  var h = doc.data() as Map<String, dynamic>;
-
-                  // kategori
-                  if (selectedCategory != "Semua") {
-                    if (h['category']
-                            ?.toString()
-                            .toLowerCase() !=
-                        selectedCategory.toLowerCase()) {
-                      return false;
-                    }
+                // Filter kategori & search
+                final filtered = docs.where((doc) {
+                  final h = doc.data();
+                  if (_selectedCategory != 'Semua') {
+                    if ((h['category'] ?? '').toString().toLowerCase() !=
+                        _selectedCategory.toLowerCase()) return false;
                   }
-
-                  // search
-                  if (search.isNotEmpty) {
-                    return h['name']
+                  if (_search.isNotEmpty) {
+                    return (h['name'] ?? '')
                         .toString()
                         .toLowerCase()
-                        .contains(search);
+                        .contains(_search);
                   }
-
                   return true;
                 }).toList();
 
-                return ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  children: List<Widget>.from(
-                    filtered.map((doc) {
-                      var h = doc.data() as Map<String, dynamic>;
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Tidak ada hotel yang sesuai',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
 
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DetailPage(data: h, docId: doc.id),
-                            ),
-                          );
-                        },
-                        child: _buildHotelCard(
-                          context,
-                          h['name'] ?? "Tanpa Nama",
-                          h['category'] ?? "Hotel",
-                          h['desc'] ?? "Tidak ada deskripsi",
-                          h['location'] ?? "Palembang",
-                          h['price'] ?? "Rp 0",
-                          h['image'] ?? "https://picsum.photos/400/200",
-                          _getColor(h['category']),
-                          h,
-                          doc.id,
-                        ),
-                      );
-                    }),
-                  ),
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 15, vertical: 10),
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) {
+                    final doc = filtered[i];
+                    final h = doc.data();
+                    return HotelCard(data: h, docId: doc.id);
+                  },
                 );
               },
             ),
@@ -171,249 +237,36 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      // ➕ TAMBAH
+      // ── FAB TAMBAH ──────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PostPage()),
-          );
-        },
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PostPage()),
+        ),
         backgroundColor: const Color(0xFFFFB300),
         icon: const Icon(Icons.add, color: Colors.black),
         label: const Text(
-          "Tambah",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          'Tambah Hotel',
+          style: TextStyle(
+              color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
 
-      // 🔻 BOTTOM NAV
+      // ── BOTTOM NAV ──────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
+        currentIndex: _currentIndex,
         selectedItemColor: const Color(0xFFC62828),
         unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => FavoritePage()),
-            );
-          }
-
-          if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => ProfilePage()),
-            );
-          }
-        },
+        onTap: _onNavTap,
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: "Beranda"),
+              icon: Icon(Icons.home), label: 'Beranda'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border), label: "Favorit"),
+              icon: Icon(Icons.favorite_border), label: 'Favorit'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: "Profil"),
+              icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
     );
-  }
-
-  // 🔴 KATEGORI
-  Widget _buildCategoryItem(String title, IconData? icon) {
-    bool isActive = selectedCategory == title;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedCategory = title;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFFFEBEE) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: isActive ? Colors.red : Colors.grey.shade300),
-        ),
-        child: Row(
-          children: [
-            if (icon != null)
-              Icon(icon, size: 16, color: Colors.red),
-            if (icon != null) const SizedBox(width: 5),
-            Text(
-              title,
-              style: TextStyle(
-                color: isActive ? Colors.red : Colors.black54,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 🏨 CARD
-  Widget _buildHotelCard(BuildContext context, String title, String tag,
-      String desc, String location, String price, String imgUrl, Color tagColor, Map<String, dynamic> h, String docId) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
-                child: imgUrl.startsWith('http')
-                    ? Image.network(
-                        imgUrl,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 200,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image),
-                        ),
-                      )
-                    : Image.memory(
-                        base64Decode(imgUrl),
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 200,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image),
-                        ),
-                      ),
-              ),
-              Positioned(
-                top: 10,
-                left: 10,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                      color: tagColor,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Text(tag,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance.collection('favorites').doc(docId).snapshots(),
-                  builder: (context, snapshot) {
-                    bool isFavorite = snapshot.hasData && snapshot.data != null && snapshot.data!.exists;
-
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white70,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: Colors.red,
-                        ),
-                        onPressed: () async {
-                          try {
-                            if (isFavorite) {
-                              await FirestoreService().deleteFavorite(docId);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Dihapus dari Favorit!")),
-                                );
-                              }
-                            } else {
-                              await FirestoreService().addFavorite(docId, h);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Ditambahkan ke Favorit!")),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Gagal: $e")),
-                              );
-                            }
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5),
-                Text(desc,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.red),
-                    Text(location),
-                    const Spacer(),
-                    Text(price,
-                        style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                )
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getColor(String? category) {
-    switch (category) {
-      case "Hotel":
-        return Colors.blue;
-      case "Resort":
-        return Colors.green;
-      case "Luxury":
-        return Colors.purple;
-      case "Budget":
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
   }
 }

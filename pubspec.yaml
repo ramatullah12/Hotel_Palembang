@@ -16,6 +16,9 @@ dependencies:
   image_picker: ^1.0.7
   firebase_storage: ^11.6.0
   flutter_image_compress: ^2.0.0
+  url_launcher: ^6.3.2
+  geocoding: ^4.0.0
+  open_street_map_search_and_pick: ^0.1.1
 
 dev_dependencies:
   flutter_test:
