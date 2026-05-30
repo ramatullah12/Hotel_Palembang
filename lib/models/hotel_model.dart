@@ -5,7 +5,7 @@ class HotelModel {
   final String name;
   final String desc;
   final String location;
-  final int price;
+  final String price;
   final String category;
   final String image;
   final String author;
@@ -45,10 +45,7 @@ class HotelModel {
 
       location: map['location']?.toString() ?? '',
 
-      price: int.tryParse(
-            map['price'].toString(),
-          ) ??
-          0,
+      price: map['price']?.toString() ?? '',
 
       category:
           map['category']?.toString() ??
