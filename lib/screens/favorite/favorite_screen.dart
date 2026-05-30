@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import '../../services/firestore_service.dart';
 import '../detail/detail_screen.dart';
@@ -30,11 +31,11 @@ class FavoritePage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || (snapshot.data as QuerySnapshot).docs.isEmpty) {
             return const Center(child: Text("Belum ada favorit"));
           }
 
-          var data = snapshot.data!.docs;
+          var data = (snapshot.data as QuerySnapshot).docs;
 
           return ListView.builder(
             padding: const EdgeInsets.all(15),

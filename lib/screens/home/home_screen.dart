@@ -4,6 +4,7 @@ import '../../widgets/hotel_card.dart';
 import '../favorite/favorite_screen.dart';
 import '../profile/profile_screen.dart';
 import '../post/post_screen.dart';
+import '../../models/hotel_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -198,7 +199,7 @@ class _HomePageState extends State<HomePage> {
 
                 // Filter kategori & search
                 final filtered = docs.where((doc) {
-                  final h = doc.data();
+                  final h = doc.data() as Map<String, dynamic>;
                   if (_selectedCategory != 'Semua') {
                     if ((h['category'] ?? '').toString().toLowerCase() !=
                         _selectedCategory.toLowerCase()) {
@@ -229,8 +230,8 @@ class _HomePageState extends State<HomePage> {
                   itemCount: filtered.length,
                   itemBuilder: (_, i) {
                     final doc = filtered[i];
-                    final h = doc.data();
-                    return HotelCard(data: h, docId: doc.id);
+                    final h = doc.data() as Map<String, dynamic>;
+                    return HotelCard(hotel: HotelModel.fromMap(doc.id, h));
                   },
                 );
               },

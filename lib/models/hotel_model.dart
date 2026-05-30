@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class HotelModel {
   final String id;
   final String name;
@@ -47,7 +49,7 @@ class HotelModel {
       favoriteCount: map['favoriteCount'] ?? 0,
 
       createdAt: map['createdAt'] != null
-          ? map['createdAt'].toDate()
+          ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
     );
   }
