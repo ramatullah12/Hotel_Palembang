@@ -162,7 +162,7 @@ class _PostPageState extends State<PostPage> {
         "name": name.text,
         "desc": desc.text,
         "location": location.text,
-        "price": int.tryParse(price.text) ?? 0,
+        "price": price.text,
         "category": selectedCategory,
         "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
         "author": "User"
