@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/splash/splash_screen.dart';
+import 'screens/auth/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,12 +21,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hotel Palembang',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFC62828)),
-        useMaterial3: true,
-      ),
-      home: const SplashScreen(),
+      theme: ThemeData(primarySwatch: Colors.red),
+      home: const LoginPage(),
     );
   }
 }
