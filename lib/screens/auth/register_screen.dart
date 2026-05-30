@@ -59,7 +59,6 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
         title: const Text("Register Hotel Palembang"),
         centerTitle: true,
@@ -70,7 +69,7 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const Icon(Icons.hotel, size: 80, color: Colors.blue),
+                const Icon(Icons.hotel, size: 80, color: Color(0xFFC62828)),
 
                 const SizedBox(height: 20),
 
