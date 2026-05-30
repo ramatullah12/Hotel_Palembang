@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../models/hotel_model.dart';
@@ -16,81 +18,73 @@ class HotelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius:
-          BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(16),
       child: Card(
         elevation: 4,
-        shape:
-            RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
-        margin:
-            const EdgeInsets.symmetric(
+        margin: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 8,
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.only(
-                topLeft:
-                    Radius.circular(16),
-                topRight:
-                    Radius.circular(16),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
-              child: Image.network(
-                hotel.image,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder:
-                    (
-                      context,
-                      error,
-                      stackTrace,
-                    ) {
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(
-                        Icons.hotel,
-                        size: 60,
+              child: hotel.image.isNotEmpty
+                  ? Image.memory(
+                      base64Decode(hotel.image),
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (
+                        context,
+                        error,
+                        stackTrace,
+                      ) {
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Icon(
+                              Icons.hotel,
+                              size: 60,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(
+                          Icons.hotel,
+                          size: 60,
+                        ),
                       ),
                     ),
-                  );
-                },
-              ),
             ),
-
             Padding(
-              padding:
-                  const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                    CrossAxisAlignment.start,
                 children: [
-
                   Text(
                     hotel.name,
-                    style:
-                        const TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight:
                           FontWeight.bold,
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(
@@ -98,48 +92,33 @@ class HotelCard extends StatelessWidget {
                         color: Colors.red,
                         size: 18,
                       ),
-                      const SizedBox(
-                        width: 4,
-                      ),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           hotel.location,
                           maxLines: 1,
                           overflow:
-                              TextOverflow
-                                  .ellipsis,
+                              TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
+                  const SizedBox(height: 8),
                   Text(
                     hotel.desc,
                     maxLines: 2,
                     overflow:
-                        TextOverflow
-                            .ellipsis,
-                    style:
-                        const TextStyle(
-                      color:
-                          Colors.black54,
+                        TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black54,
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 12,
-                  ),
-
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment:
                         MainAxisAlignment
                             .spaceBetween,
                     children: [
-
                       Text(
                         'Rp ${hotel.price}',
                         style:
@@ -151,7 +130,6 @@ class HotelCard extends StatelessWidget {
                               Colors.blue,
                         ),
                       ),
-
                       Chip(
                         label: Text(
                           hotel.category,
