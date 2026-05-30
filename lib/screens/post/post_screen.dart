@@ -33,7 +33,7 @@ class _PostPageState extends State<PostPage> {
       name.text = widget.existingHotel!['name'] ?? '';
       desc.text = widget.existingHotel!['desc'] ?? '';
       location.text = widget.existingHotel!['location'] ?? '';
-      price.text = widget.existingHotel!['price'] ?? '';
+      price.text = widget.existingHotel!['price']?.toString() ?? '';
       selectedCategory = widget.existingHotel!['category'] ?? 'Hotel';
       _imageBase64 = widget.existingHotel!['image'];
     }
@@ -162,7 +162,7 @@ class _PostPageState extends State<PostPage> {
         "name": name.text,
         "desc": desc.text,
         "location": location.text,
-        "price": price.text,
+        "price": int.tryParse(price.text) ?? 0,
         "category": selectedCategory,
         "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
         "author": "User"
