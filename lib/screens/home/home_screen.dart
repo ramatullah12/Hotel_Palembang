@@ -36,14 +36,14 @@ class _HomePageState extends State<HomePage> {
       setState(() => _currentIndex = 1);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const FavoritePage()),
+        MaterialPageRoute(builder: (_) => FavoritePage()),
       ).then((_) => setState(() => _currentIndex = 0));
     }
     if (index == 2) {
       setState(() => _currentIndex = 2);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ProfilePage()),
+        MaterialPageRoute(builder: (_) => ProfilePage()),
       ).then((_) => setState(() => _currentIndex = 0));
     }
   }
@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
             tooltip: 'Favorit',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const FavoritePage()),
+              MaterialPageRoute(builder: (_) => FavoritePage()),
             ),
           ),
         ],
@@ -201,7 +201,9 @@ class _HomePageState extends State<HomePage> {
                   final h = doc.data();
                   if (_selectedCategory != 'Semua') {
                     if ((h['category'] ?? '').toString().toLowerCase() !=
-                        _selectedCategory.toLowerCase()) return false;
+                        _selectedCategory.toLowerCase()) {
+                      return false;
+                    }
                   }
                   if (_search.isNotEmpty) {
                     return (h['name'] ?? '')
