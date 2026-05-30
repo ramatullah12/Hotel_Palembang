@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String uid;
   final String name;
@@ -42,12 +44,12 @@ class UserModel {
 
       bio: map['bio'] ?? '',
 
-      postCount: map['postCount'] ?? 0,
+      postCount: int.tryParse(map['postCount']?.toString() ?? '') ?? 0,
 
       favoriteCount: int.tryParse(map['favoriteCount']?.toString() ?? '') ?? 0,
 
       createdAt: map['createdAt'] != null
-          ? map['createdAt'].toDate()
+          ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
     );
   }
