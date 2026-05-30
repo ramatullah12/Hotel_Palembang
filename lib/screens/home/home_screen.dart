@@ -4,6 +4,7 @@ import '../../widgets/hotel_card.dart';
 import '../favorite/favorite_screen.dart';
 import '../profile/profile_screen.dart';
 import '../post/post_screen.dart';
+import '../detail/detail_screen.dart';
 import '../../models/hotel_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -231,7 +232,17 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (_, i) {
                     final doc = filtered[i];
                     final h = doc.data() as Map<String, dynamic>;
-                    return HotelCard(hotel: HotelModel.fromMap(doc.id, h));
+                    return HotelCard(
+                      hotel: HotelModel.fromMap(doc.id, h),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DetailPage(data: h, docId: doc.id),
+                          ),
+                        );
+                      },
+                    );
                   },
                 );
               },
