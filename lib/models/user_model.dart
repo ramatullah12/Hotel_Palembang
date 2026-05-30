@@ -44,7 +44,7 @@ class UserModel {
 
       postCount: map['postCount'] ?? 0,
 
-      favoriteCount: map['favoriteCount'] ?? 0,
+      favoriteCount: int.tryParse(map['favoriteCount']?.toString() ?? '') ?? 0,
 
       createdAt: map['createdAt'] != null
           ? map['createdAt'].toDate()
