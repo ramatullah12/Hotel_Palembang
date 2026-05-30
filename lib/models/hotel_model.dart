@@ -32,25 +32,55 @@ class HotelModel {
     required this.createdAt,
   });
 
-  factory HotelModel.fromMap(String id, Map<String, dynamic> map) {
+  factory HotelModel.fromMap(
+    String id,
+    Map<String, dynamic> map,
+  ) {
     return HotelModel(
       id: id,
-      name: map['name'] ?? '',
-      desc: map['desc'] ?? '',
-      location: map['location'] ?? '',
-      price: map['price'] ?? 0,
-      category: map['category'] ?? 'Hotel',
-      image: map['image'] ?? '',
-      author: map['author'] ?? 'User',
 
-      latitude: (map['latitude'] ?? 0.0).toDouble(),
-      longitude: (map['longitude'] ?? 0.0).toDouble(),
+      name: map['name']?.toString() ?? '',
 
-      favoriteCount: map['favoriteCount'] ?? 0,
+      desc: map['desc']?.toString() ?? '',
 
-      createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      location: map['location']?.toString() ?? '',
+
+      price: int.tryParse(
+            map['price'].toString(),
+          ) ??
+          0,
+
+      category:
+          map['category']?.toString() ??
+              'Hotel',
+
+      image: map['image']?.toString() ?? '',
+
+      author:
+          map['author']?.toString() ??
+              'User',
+
+      latitude:
+          (map['latitude'] ?? 0)
+              .toDouble(),
+
+      longitude:
+          (map['longitude'] ?? 0)
+              .toDouble(),
+
+      favoriteCount:
+          int.tryParse(
+                map['favoriteCount']
+                    .toString(),
+              ) ??
+              0,
+
+      createdAt:
+          map['createdAt'] != null
+              ? (map['createdAt']
+                      as Timestamp)
+                  .toDate()
+              : DateTime.now(),
     );
   }
 
@@ -63,13 +93,11 @@ class HotelModel {
       'category': category,
       'image': image,
       'author': author,
-
       'latitude': latitude,
       'longitude': longitude,
-
       'favoriteCount': favoriteCount,
-
-      'createdAt': createdAt,
+      'createdAt':
+          Timestamp.fromDate(createdAt),
     };
   }
 }
