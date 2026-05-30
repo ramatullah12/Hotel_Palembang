@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CommentModel {
   final String id;
   final String hotelId;
@@ -26,7 +28,7 @@ class CommentModel {
       userImage: map['userImage'] ?? '',
       comment: map['comment'] ?? '',
       createdAt: map['createdAt'] != null
-          ? map['createdAt'].toDate()
+          ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
     );
   }
