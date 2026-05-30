@@ -36,6 +36,10 @@ class FirestoreService {
     return favorites.snapshots();
   }
 
+  Future<void> addFavorite(String docId, Map<String, dynamic> data) {
+    return favorites.doc(docId).set(data);
+  }
+
   Future<void> deleteFavorite(String docId) {
     return favorites.doc(docId).delete();
   }
