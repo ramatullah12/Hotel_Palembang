@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import '../../services/firestore_service.dart';
 import '../detail/detail_screen.dart';
+import '../../models/hotel_model.dart';
+import '../../widgets/hotel_card.dart';
 
 class FavoritePage extends StatelessWidget {
   final service = FirestoreService();
@@ -46,9 +48,9 @@ class FavoritePage extends StatelessWidget {
                   ? f['image'] 
                   : "https://picsum.photos/400/200";
 
-              return GestureDetector(
+              return HotelCard(
+                hotel: HotelModel.fromMap(data[i].id, f),
                 onTap: () {
-                  // 🔥 buka detail
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -56,160 +58,6 @@ class FavoritePage extends StatelessWidget {
                     ),
                   );
                 },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      // 🔥 IMAGE + TAG
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(20)),
-                            child: imgUrl.startsWith('http')
-                                ? Image.network(
-                                    imgUrl,
-                                    height: 200,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      height: 200,
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.image),
-                                    ),
-                                  )
-                                : Image.memory(
-                                    base64Decode(imgUrl),
-                                    height: 200,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      height: 200,
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.image),
-                                    ),
-                                  ),
-                          ),
-
-                          // TAG KATEGORI
-                          Positioned(
-                            top: 10,
-                            left: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                f['category'] ?? "Umum",
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-
-                          // ICON FAVORIT
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.white70,
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.favorite, color: Colors.red),
-                                onPressed: () async {
-                                  try {
-                                    await service.deleteFavorite(data[i].id);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Dihapus dari Favorit!")),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Gagal: $e")),
-                                      );
-                                    }
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // 🔥 INFO
-                      Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              f['name'] ?? "",
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-
-                            Text(
-                              f['desc'] ?? "",
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    size: 16, color: Colors.red),
-                                Expanded(
-                                  child: Text(
-                                    f['location'] ?? "Lokasi tidak diketahui",
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            Row(
-                              children: [
-                                const CircleAvatar(
-                                  radius: 12,
-                                  child: Icon(Icons.person, size: 14),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(f['author'] ?? "User"),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           );
