@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../auth/login_screen.dart';
-import '../navigation/bottom_navigation.dart';
+import '../home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,7 +36,7 @@ class _SplashScreenState
         context,
         MaterialPageRoute(
           builder: (_) =>
-              const BottomNavigation(),
+              const HomePage(),
         ),
       );
     } else {
@@ -44,7 +44,7 @@ class _SplashScreenState
         context,
         MaterialPageRoute(
           builder: (_) =>
-              const LoginScreen(),
+              const LoginPage(),
         ),
       );
     }

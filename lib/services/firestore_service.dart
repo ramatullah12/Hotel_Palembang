@@ -15,4 +15,28 @@ class FirestoreService {
 
   CollectionReference get favorites =>
       _firestore.collection('favorites');
+
+  Stream<QuerySnapshot> getHotels() {
+    return hotels.snapshots();
+  }
+
+  Future<void> addHotel(Map<String, dynamic> data) {
+    return hotels.add(data);
+  }
+
+  Future<void> updateHotel(String docId, Map<String, dynamic> data) {
+    return hotels.doc(docId).update(data);
+  }
+
+  Future<void> deleteHotel(String docId) {
+    return hotels.doc(docId).delete();
+  }
+
+  Stream<QuerySnapshot> getFavorite() {
+    return favorites.snapshots();
+  }
+
+  Future<void> deleteFavorite(String docId) {
+    return favorites.doc(docId).delete();
+  }
 }

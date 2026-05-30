@@ -21,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     try {
-      await auth.login(email.text.trim(), pass.text.trim());
+      await auth.login(email: email.text.trim(), password: pass.text.trim());
 
       if (context.mounted) {
         Navigator.pushReplacement(

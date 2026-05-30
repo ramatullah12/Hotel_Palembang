@@ -35,7 +35,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      await auth.register(email.text, pass.text);
+      await auth.register(email: email.text, password: pass.text);
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
