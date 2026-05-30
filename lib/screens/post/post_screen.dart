@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:open_street_map_search_and_pick/open_street_map_search_and_pick.dart';
 import '../../services/firestore_service.dart';
 
 class PostPage extends StatefulWidget {
@@ -23,6 +24,8 @@ class _PostPageState extends State<PostPage> {
 
   String selectedCategory = "Hotel";
   bool isLoading = false;
+  double? _lat;
+  double? _lng;
 
   bool get isEditing => widget.existingHotel != null;
 
@@ -36,15 +39,12 @@ class _PostPageState extends State<PostPage> {
       price.text = widget.existingHotel!['price']?.toString() ?? '';
       selectedCategory = widget.existingHotel!['category'] ?? 'Hotel';
       _imageBase64 = widget.existingHotel!['image'];
+      _lat = (widget.existingHotel!['latitude'] as num?)?.toDouble();
+      _lng = (widget.existingHotel!['longitude'] as num?)?.toDouble();
     }
   }
 
-  final List<String> categories = [
-    "Hotel",
-    "Resort",
-    "Budget",
-    "Luxury",
-  ];
+  final List<String> categories = ["Hotel", "Resort", "Budget", "Luxury"];
 
   String? _imageBase64;
   final picker = ImagePicker();
@@ -147,9 +147,9 @@ class _PostPageState extends State<PostPage> {
     if (isLoading) return;
 
     if (name.text.isEmpty || desc.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Harap isi semua data")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Harap isi semua data")));
       return;
     }
 
@@ -165,7 +165,9 @@ class _PostPageState extends State<PostPage> {
         "price": price.text,
         "category": selectedCategory,
         "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
-        "author": "User"
+        "author": "User",
+        "latitude": _lat ?? 0.0,
+        "longitude": _lng ?? 0.0,
       };
 
       if (isEditing && widget.docId != null) {
@@ -177,9 +179,9 @@ class _PostPageState extends State<PostPage> {
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload gagal: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Upload gagal: $e")));
       }
     } finally {
       if (mounted) {
@@ -194,7 +196,10 @@ class _PostPageState extends State<PostPage> {
       backgroundColor: const Color(0xFFF5F1EE),
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
-        title: Text(isEditing ? "Edit Hotel" : "Tambah Hotel", style: const TextStyle(color: Colors.white)),
+        title: Text(
+          isEditing ? "Edit Hotel" : "Tambah Hotel",
+          style: const TextStyle(color: Colors.white),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           TextButton(
@@ -203,10 +208,13 @@ class _PostPageState extends State<PostPage> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
                   )
                 : const Text("Kirim", style: TextStyle(color: Colors.white)),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -246,7 +254,10 @@ class _PostPageState extends State<PostPage> {
 
             const SizedBox(height: 20),
 
-            const Text("Kategori", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              "Kategori",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
 
             Wrap(
@@ -257,7 +268,10 @@ class _PostPageState extends State<PostPage> {
                 return GestureDetector(
                   onTap: () => setState(() => selectedCategory = cat),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: isActive ? Colors.red.shade100 : Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -277,7 +291,42 @@ class _PostPageState extends State<PostPage> {
             const SizedBox(height: 10),
             _input(desc, "Deskripsi", Icons.description, maxLines: 4),
             const SizedBox(height: 10),
-            _input(location, "Lokasi", Icons.location_on),
+            _input(
+              location,
+              "Pilih Lokasi dari Peta",
+              Icons.map,
+              readOnly: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        title: const Text(
+                          "Pilih Lokasi",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: const Color(0xFFC62828),
+                        iconTheme: const IconThemeData(color: Colors.white),
+                      ),
+                      body: OpenStreetMapSearchAndPick(
+                        buttonColor: const Color(0xFFC62828),
+                        buttonText: 'Pilih Lokasi Ini',
+                        onPicked: (pickedData) {
+                          setState(() {
+                            location.text = pickedData.addressName;
+                            _lat = pickedData.latLong.latitude;
+                            _lng = pickedData.latLong.longitude;
+                          });
+
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 10),
             _input(price, "Harga", Icons.attach_money),
           ],
@@ -286,11 +335,19 @@ class _PostPageState extends State<PostPage> {
     );
   }
 
-  Widget _input(TextEditingController c, String hint, IconData icon,
-      {int maxLines = 1}) {
+  Widget _input(
+    TextEditingController c,
+    String hint,
+    IconData icon, {
+    int maxLines = 1,
+    VoidCallback? onTap,
+    bool readOnly = false,
+  }) {
     return TextField(
       controller: c,
       maxLines: maxLines,
+      readOnly: readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
