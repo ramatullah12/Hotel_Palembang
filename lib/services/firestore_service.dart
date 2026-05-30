@@ -1,40 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
-  final db = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
-  // 🔥 GET HOTEL (AMAN)
-  Stream<QuerySnapshot<Map<String, dynamic>>> getHotels() {
-    return db.collection('hotels').snapshots();
-  }
+  CollectionReference get hotels =>
+      _firestore.collection('hotels');
 
-  // ➕ TAMBAH HOTEL
-  Future<void> addHotel(Map<String, dynamic> data) async {
-    await db.collection('hotels').add(data);
-  }
+  CollectionReference get users =>
+      _firestore.collection('users');
 
-  // ❌ HAPUS HOTEL
-  Future<void> deleteHotel(String id) async {
-    await db.collection('hotels').doc(id).delete();
-  }
+  CollectionReference get comments =>
+      _firestore.collection('comments');
 
-  // ✏️ UPDATE HOTEL
-  Future<void> updateHotel(String id, Map<String, dynamic> data) async {
-    await db.collection('hotels').doc(id).update(data);
-  }
-
-  // ❤️ TAMBAH FAVORIT
-  Future<void> addFavorite(String id, Map<String, dynamic> data) async {
-    await db.collection('favorites').doc(id).set(data);
-  }
-
-  // 🔥 GET FAVORIT
-  Stream<QuerySnapshot<Map<String, dynamic>>> getFavorite() {
-    return db.collection('favorites').snapshots();
-  }
-
-  // ❌ HAPUS FAVORIT
-  Future<void> deleteFavorite(String id) async {
-    await db.collection('favorites').doc(id).delete();
-  }
+  CollectionReference get favorites =>
+      _firestore.collection('favorites');
 }
