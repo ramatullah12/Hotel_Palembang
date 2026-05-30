@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/firestore_service.dart';
 import '../post/post_screen.dart';
+import 'package:intl/intl.dart';
 
 class DetailPage extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -30,16 +31,17 @@ class DetailPage extends StatelessWidget {
     final String name = data['name'] ?? 'Detail Hotel';
     final String desc = data['desc'] ?? 'Tidak ada deskripsi.';
     final String location = data['location'] ?? '-';
-    final String price = data['price']?.toString() ?? '-';
+    final String priceRaw = data['price']?.toString() ?? '0';
+    final String price = NumberFormat.currency(locale: 'id', symbol: 'Rp. ', decimalDigits: 0).format(num.tryParse(priceRaw) ?? 0);
     final String category = data['category'] ?? 'Hotel';
     final String author = data['author'] ?? 'User';
+    final String authorEmail = data['authorEmail'] ?? '';
     final String imgUrl =
         (data['image'] != null && data['image'].toString().isNotEmpty)
             ? data['image']
             : '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
 
       body: CustomScrollView(
         slivers: [
@@ -50,9 +52,9 @@ class DetailPage extends StatelessWidget {
             backgroundColor: const Color(0xFFC62828),
             iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
-              background: imgUrl.isEmpty
+                  background: imgUrl.isEmpty
                   ? Container(
-                      color: Colors.grey[200],
+                      color: Theme.of(context).colorScheme.surface,
                       child: const Icon(Icons.hotel,
                           size: 80, color: Colors.grey),
                     )
@@ -142,8 +144,16 @@ class DetailPage extends StatelessWidget {
                   // Lokasi
                   GestureDetector(
                     onTap: () async {
-                      final query = Uri.encodeComponent(location);
-                      final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                      final lat = data['latitude'];
+                      final lng = data['longitude'];
+                      Uri url;
+                      if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
+                        url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                      } else {
+                        final query = Uri.encodeComponent(location);
+                        url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                      }
+
                       if (await canLaunchUrl(url)) {
                         await launchUrl(url, mode: LaunchMode.externalApplication);
                       }
@@ -199,9 +209,9 @@ class DetailPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     desc,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black87,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         height: 1.6),
                   ),
 
@@ -222,12 +232,16 @@ class DetailPage extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Diposting oleh',
+                          Text('Diposting oleh',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.grey)),
+                                  fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5))),
                           Text(author,
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600)),
+                          if (authorEmail.isNotEmpty)
+                            Text(authorEmail,
+                                style: TextStyle(
+                                    fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5))),
                         ],
                       ),
                     ],

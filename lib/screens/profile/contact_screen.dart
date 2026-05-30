@@ -6,7 +6,6 @@ class ContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
@@ -54,11 +53,11 @@ class ContactPage extends StatelessWidget {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.black54 : Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
@@ -67,30 +66,35 @@ class ContactPage extends StatelessWidget {
               child: Column(
                 children: [
                   _infoTile(
+                    context,
                     Icons.person_outline,
                     'Nama',
                     'Ramatullah',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(
+                    context,
                     Icons.email_outlined,
                     'Email',
                     'ramatullah@email.com',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(
+                    context,
                     Icons.school_outlined,
                     'Universitas',
                     'Universitas Palembang',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(
+                    context,
                     Icons.book_outlined,
                     'Mata Kuliah',
                     'Pemrograman Aplikasi Bergerak',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(
+                    context,
                     Icons.calendar_today_outlined,
                     'Tahun',
                     '2026',
@@ -106,7 +110,7 @@ class ContactPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFEBEE),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF3B1C1C) : const Color(0xFFFFEBEE),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(
@@ -133,7 +137,6 @@ class ContactPage extends StatelessWidget {
                     'Data disimpan secara real-time menggunakan Firebase Firestore.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black87,
                       height: 1.5,
                     ),
                   ),
@@ -155,7 +158,7 @@ class ContactPage extends StatelessWidget {
     );
   }
 
-  Widget _infoTile(IconData icon, String label, String value) {
+  Widget _infoTile(BuildContext context, IconData icon, String label, String value) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFC62828)),
       title: Text(
@@ -164,9 +167,9 @@ class ContactPage extends StatelessWidget {
       ),
       subtitle: Text(
         value,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
-          color: Colors.black87,
+          color: Theme.of(context).textTheme.bodyMedium?.color,
           fontWeight: FontWeight.w500,
         ),
       ),

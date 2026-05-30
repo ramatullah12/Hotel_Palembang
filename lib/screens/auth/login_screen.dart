@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../home/home_screen.dart';
+import '../../widgets/custom_button.dart';
+import '../navigation/bottom_navigation.dart';
 import 'register_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
       if (context.mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const MainNavigation()),
         );
       }
     } catch (e) {
@@ -117,30 +118,11 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 25),
 
                     // BUTTON LOGIN
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : login,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC62828),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                "LOGIN",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                      ),
+                    CustomButton(
+                      label: "LOGIN",
+                      onPressed: login,
+                      isLoading: isLoading,
                     ),
-
                     const SizedBox(height: 15),
 
                     // LINK REGISTER

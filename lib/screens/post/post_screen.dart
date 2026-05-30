@@ -2,7 +2,36 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_street_map_search_and_pick/open_street_map_search_and_pick.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firestore_service.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (newText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final int value = int.parse(newText);
+    final formatter = NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0);
+    String formatted = formatter.format(value).trim();
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 class PostPage extends StatefulWidget {
   final Map<String, dynamic>? existingHotel;
@@ -36,7 +65,14 @@ class _PostPageState extends State<PostPage> {
       name.text = widget.existingHotel!['name'] ?? '';
       desc.text = widget.existingHotel!['desc'] ?? '';
       location.text = widget.existingHotel!['location'] ?? '';
-      price.text = widget.existingHotel!['price']?.toString() ?? '';
+      String p = widget.existingHotel!['price']?.toString() ?? '';
+      if (p.isNotEmpty) {
+        final int value = int.tryParse(p.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+        final formatter = NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0);
+        price.text = formatter.format(value).trim();
+      } else {
+        price.text = '';
+      }
       selectedCategory = widget.existingHotel!['category'] ?? 'Hotel';
       _imageBase64 = widget.existingHotel!['image'];
       _lat = (widget.existingHotel!['latitude'] as num?)?.toDouble();
@@ -142,6 +178,60 @@ class _PostPageState extends State<PostPage> {
     );
   }
 
+  // 📍 AMBIL LOKASI GPS
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Layanan lokasi dinonaktifkan.')));
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak.')));
+        return;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak permanen.')));
+      return;
+    } 
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      
+      setState(() {
+        _lat = position.latitude;
+        _lng = position.longitude;
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          location.text = '${place.street}, ${place.subLocality}, ${place.locality}';
+        } else {
+          location.text = '${position.latitude}, ${position.longitude}';
+        }
+      });
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mendapatkan lokasi: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
   // 🚀 SIMPAN DATA
   Future submit() async {
     if (isLoading) return;
@@ -158,14 +248,27 @@ class _PostPageState extends State<PostPage> {
     });
 
     try {
+      String authorName = "User";
+      String authorEmail = "";
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final userData = doc.data() as Map<String, dynamic>;
+          authorName = userData['name'] ?? "User";
+          authorEmail = userData['email'] ?? "";
+        }
+      }
+
       final data = {
         "name": name.text,
         "desc": desc.text,
         "location": location.text,
-        "price": price.text,
+        "price": price.text.replaceAll('.', ''),
         "category": selectedCategory,
         "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
-        "author": "User",
+        "author": authorName,
+        "authorEmail": authorEmail,
         "latitude": _lat ?? 0.0,
         "longitude": _lng ?? 0.0,
       };
@@ -193,7 +296,6 @@ class _PostPageState extends State<PostPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1EE),
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
         title: Text(
@@ -273,13 +375,13 @@ class _PostPageState extends State<PostPage> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: isActive ? Colors.red.shade100 : Colors.white,
+                      color: isActive ? Colors.red.shade100 : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isActive ? Colors.red : Colors.grey.shade300,
+                        color: isActive ? Colors.red : Theme.of(context).dividerColor,
                       ),
                     ),
-                    child: Text(cat),
+                    child: Text(cat, style: TextStyle(color: isActive ? Colors.black87 : Theme.of(context).textTheme.bodyMedium?.color)),
                   ),
                 );
               }).toList(),
@@ -287,48 +389,74 @@ class _PostPageState extends State<PostPage> {
 
             const SizedBox(height: 20),
 
-            _input(name, "Nama Hotel", Icons.hotel),
+            _input(context, name, "Nama Hotel", Icons.hotel),
             const SizedBox(height: 10),
-            _input(desc, "Deskripsi", Icons.description, maxLines: 4),
+            _input(context, desc, "Deskripsi", Icons.description, maxLines: 4),
             const SizedBox(height: 10),
-            _input(
-              location,
-              "Pilih Lokasi dari Peta",
-              Icons.map,
-              readOnly: true,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Scaffold(
-                      appBar: AppBar(
-                        title: const Text(
-                          "Pilih Lokasi",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: const Color(0xFFC62828),
-                        iconTheme: const IconThemeData(color: Colors.white),
-                      ),
-                      body: OpenStreetMapSearchAndPick(
-                        buttonColor: const Color(0xFFC62828),
-                        buttonText: 'Pilih Lokasi Ini',
-                        onPicked: (pickedData) {
-                          setState(() {
-                            location.text = pickedData.addressName;
-                            _lat = pickedData.latLong.latitude;
-                            _lng = pickedData.latLong.longitude;
-                          });
+            Row(
+              children: [
+                Expanded(
+                  child: _input(
+                    context,
+                    location,
+                    "Pilih Lokasi dari Peta",
+                    Icons.map,
+                    readOnly: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            appBar: AppBar(
+                              title: const Text(
+                                "Pilih Lokasi",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: const Color(0xFFC62828),
+                              iconTheme: const IconThemeData(color: Colors.white),
+                            ),
+                            body: OpenStreetMapSearchAndPick(
+                              buttonColor: const Color(0xFFC62828),
+                              buttonText: 'Pilih Lokasi Ini',
+                              onPicked: (pickedData) {
+                                setState(() {
+                                  location.text = pickedData.addressName;
+                                  _lat = pickedData.latLong.latitude;
+                                  _lng = pickedData.latLong.longitude;
+                                });
 
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.my_location, color: Colors.red),
+                    onPressed: _getCurrentLocation,
+                    tooltip: "Gunakan GPS Saat Ini",
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            _input(price, "Harga", Icons.attach_money),
+            _input(
+              context,
+              price, 
+              "Harga", 
+              Icons.attach_money,
+              keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
+            ),
           ],
         ),
       ),
@@ -336,23 +464,29 @@ class _PostPageState extends State<PostPage> {
   }
 
   Widget _input(
+    BuildContext context,
     TextEditingController c,
     String hint,
     IconData icon, {
     int maxLines = 1,
     VoidCallback? onTap,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
+    TextInputType? keyboardType,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: c,
       maxLines: maxLines,
       readOnly: readOnly,
       onTap: onTap,
+      inputFormatters: inputFormatters,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
         filled: true,
-        fillColor: Colors.grey.shade200,
+        fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

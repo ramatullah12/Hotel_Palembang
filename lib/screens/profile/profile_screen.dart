@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../theme/theme_provider.dart';
 import 'contact_screen.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
@@ -14,8 +16,9 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1EE),
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
@@ -75,11 +78,11 @@ class ProfilePage extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 30),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Color(0xFFC62828),
-                        Color(0xFFF5F1EE),
+                        const Color(0xFFC62828),
+                        Theme.of(context).scaffoldBackgroundColor,
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -127,7 +130,7 @@ class ProfilePage extends StatelessWidget {
                       // 🔥 EMAIL
                       Text(
                         data['email'] ?? "",
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                       ),
 
                       const SizedBox(height: 10),
@@ -135,7 +138,7 @@ class ProfilePage extends StatelessWidget {
                       // 🔥 BIO
                       Text(
                         data['bio'] ?? "",
-                        style: const TextStyle(color: Colors.black54),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                       ),
 
                       const SizedBox(height: 15),
@@ -157,6 +160,16 @@ class ProfilePage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
+
+                SwitchListTile(
+                  secondary: Icon(Icons.dark_mode, color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
+                  title: const Text("Mode Gelap", style: TextStyle(fontWeight: FontWeight.bold)),
+                  activeColor: const Color(0xFFC62828),
+                  value: themeProvider.isDarkMode,
+                  onChanged: (value) {
+                    themeProvider.toggleTheme();
+                  },
+                ),
 
                 // 📞 KONTAK
                 ListTile(

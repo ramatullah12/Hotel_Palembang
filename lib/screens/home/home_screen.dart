@@ -19,7 +19,6 @@ class _HomePageState extends State<HomePage> {
 
   String _selectedCategory = 'Semua';
   String _search = '';
-  int _currentIndex = 0;
 
   final List<Map<String, dynamic>> _categories = [
     {'label': 'Semua', 'icon': Icons.apps},
@@ -29,31 +28,9 @@ class _HomePageState extends State<HomePage> {
     {'label': 'Luxury', 'icon': Icons.star},
   ];
 
-  void _onNavTap(int index) {
-    if (index == 0) {
-      setState(() => _currentIndex = 0);
-      return;
-    }
-    if (index == 1) {
-      setState(() => _currentIndex = 1);
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => FavoritePage()),
-      ).then((_) => setState(() => _currentIndex = 0));
-    }
-    if (index == 2) {
-      setState(() => _currentIndex = 2);
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ProfilePage()),
-      ).then((_) => setState(() => _currentIndex = 0));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
 
       // ── APP BAR ───────────────────────────────────────────
       appBar: AppBar(
@@ -90,10 +67,10 @@ class _HomePageState extends State<HomePage> {
               onChanged: (v) => setState(() => _search = v.toLowerCase()),
               decoration: InputDecoration(
                 hintText: 'Cari hotel di Palembang...',
-                hintStyle: const TextStyle(color: Colors.black45),
-                prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -124,12 +101,12 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       color: isActive
                           ? const Color(0xFFC62828)
-                          : Colors.white,
+                          : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isActive
                             ? const Color(0xFFC62828)
-                            : Colors.grey.shade300,
+                            : Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Row(
@@ -137,14 +114,13 @@ class _HomePageState extends State<HomePage> {
                         Icon(
                           cat['icon'] as IconData,
                           size: 15,
-                          color: isActive ? Colors.white : Colors.black54,
+                          color: isActive ? Colors.white : Theme.of(context).iconTheme.color,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           cat['label'] as String,
                           style: TextStyle(
-                            color:
-                                isActive ? Colors.white : Colors.black54,
+                            color: isActive ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -258,29 +234,14 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => const PostPage()),
         ),
         backgroundColor: const Color(0xFFFFB300),
-        icon: const Icon(Icons.add, color: Colors.black),
+        icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Tambah Hotel',
           style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold),
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
 
-      // ── BOTTOM NAV ──────────────────────────────────────
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: const Color(0xFFC62828),
-        unselectedItemColor: Colors.grey,
-        onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: 'Beranda'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border), label: 'Favorit'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profil'),
-        ],
-      ),
     );
   }
 }

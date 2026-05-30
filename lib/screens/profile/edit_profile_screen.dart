@@ -98,7 +98,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
@@ -226,7 +225,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         hintText: hint,
         prefixIcon: Icon(icon, color: const Color(0xFFC62828)),
         filled: true,
-        fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+        fillColor: readOnly ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.grey.shade100) : Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),

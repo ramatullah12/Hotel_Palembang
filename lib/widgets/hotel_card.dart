@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/hotel_model.dart';
 import '../services/firestore_service.dart';
+import 'package:intl/intl.dart';
 
 class HotelCard extends StatelessWidget {
   final HotelModel hotel;
@@ -78,8 +79,8 @@ class HotelCard extends StatelessWidget {
                   top: 10,
                   right: 10,
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white70,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
                       shape: BoxShape.circle,
                     ),
                     child: StreamBuilder<DocumentSnapshot>(
@@ -166,8 +167,8 @@ class HotelCard extends StatelessWidget {
                     maxLines: 2,
                     overflow:
                         TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black54,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -177,7 +178,7 @@ class HotelCard extends StatelessWidget {
                             .spaceBetween,
                     children: [
                       Text(
-                        'Rp ${hotel.price}',
+                        NumberFormat.currency(locale: 'id', symbol: 'Rp. ', decimalDigits: 0).format(num.tryParse(hotel.price) ?? 0),
                         style:
                             const TextStyle(
                           fontSize: 16,
