@@ -42,7 +42,6 @@ class HotelModel {
       author: map['author'] ?? 'User',
 
       latitude: (map['latitude'] ?? 0.0).toDouble(),
-
       longitude: (map['longitude'] ?? 0.0).toDouble(),
 
       favoriteCount: map['favoriteCount'] ?? 0,
