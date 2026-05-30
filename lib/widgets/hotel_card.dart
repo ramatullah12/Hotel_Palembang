@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/hotel_model.dart';
 import '../services/firestore_service.dart';
@@ -81,24 +82,46 @@ class HotelCard extends StatelessWidget {
                       color: Colors.white70,
                       shape: BoxShape.circle,
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.favorite_border, color: Colors.red),
-                      onPressed: () async {
-                        try {
-                          await FirestoreService().addFavorite(hotel.id, hotel.toMap());
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Berhasil ditambahkan ke Favorit!")),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Gagal menambah favorit: $e")),
-                            );
-                          }
+                    child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirestoreService().favorites.doc(hotel.id).snapshots(),
+                      builder: (context, snapshot) {
+                        bool isFavorite = false;
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          isFavorite = true;
                         }
-                      },
+
+                        return IconButton(
+                          icon: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: Colors.red,
+                          ),
+                          onPressed: () async {
+                            try {
+                              if (isFavorite) {
+                                await FirestoreService().deleteFavorite(hotel.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Dihapus dari Favorit!")),
+                                  );
+                                }
+                              } else {
+                                await FirestoreService().addFavorite(hotel.id, hotel.toMap());
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Berhasil ditambahkan ke Favorit!")),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Gagal: $e")),
+                                );
+                              }
+                            }
+                          },
+                        );
+                      }
                     ),
                   ),
                 ),
