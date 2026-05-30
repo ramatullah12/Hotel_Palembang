@@ -30,7 +30,7 @@ class DetailPage extends StatelessWidget {
     final String name = data['name'] ?? 'Detail Hotel';
     final String desc = data['desc'] ?? 'Tidak ada deskripsi.';
     final String location = data['location'] ?? '-';
-    final String price = data['price'] ?? '-';
+    final String price = data['price']?.toString() ?? '-';
     final String category = data['category'] ?? 'Hotel';
     final String author = data['author'] ?? 'User';
     final String imgUrl =
