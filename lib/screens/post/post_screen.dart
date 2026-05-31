@@ -48,10 +48,12 @@ class _PostPageState extends State<PostPage> {
   final desc = TextEditingController();
   final location = TextEditingController();
   final price = TextEditingController();
+  final phone = TextEditingController();
 
   final service = FirestoreService();
 
   String selectedCategory = "Hotel";
+  List<String> selectedAmenities = [];
   bool isLoading = false;
   double? _lat;
   double? _lng;
@@ -74,31 +76,44 @@ class _PostPageState extends State<PostPage> {
         price.text = '';
       }
       selectedCategory = widget.existingHotel!['category'] ?? 'Hotel';
-      _imageBase64 = widget.existingHotel!['image'];
       _lat = (widget.existingHotel!['latitude'] as num?)?.toDouble();
       _lng = (widget.existingHotel!['longitude'] as num?)?.toDouble();
+      phone.text = widget.existingHotel!['phone'] ?? '';
+      selectedAmenities = List<String>.from(widget.existingHotel!['amenities'] ?? []);
+      
+      if (widget.existingHotel!['images'] != null) {
+        _base64Images = List<String>.from(widget.existingHotel!['images']);
+      } else if (widget.existingHotel!['image'] != null && widget.existingHotel!['image'].toString().isNotEmpty) {
+        _base64Images = [widget.existingHotel!['image']];
+      }
     }
   }
 
   final List<String> categories = ["Hotel", "Resort", "Budget", "Luxury"];
+  final List<String> availableAmenities = ["WiFi", "AC", "Kolam Renang", "Parkir", "Restoran", "Resepsionis 24 Jam"];
 
-  String? _imageBase64;
+  List<String> _base64Images = [];
   final picker = ImagePicker();
 
   Future<void> _pickImage(ImageSource source) async {
+    if (_base64Images.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maksimal 5 foto!')));
+      return;
+    }
+
     try {
       final picked = await picker.pickImage(
         source: source,
-        imageQuality: 50,
-        maxWidth: 800,
-        maxHeight: 800,
+        imageQuality: 30, // Kompresi tinggi
+        maxWidth: 600,
+        maxHeight: 600,
       );
 
       if (picked != null) {
         final bytes = await picked.readAsBytes();
         final base64 = base64Encode(bytes);
         setState(() {
-          _imageBase64 = base64;
+          _base64Images.add(base64);
         });
       }
     } catch (e) {
@@ -236,10 +251,18 @@ class _PostPageState extends State<PostPage> {
   Future submit() async {
     if (isLoading) return;
 
-    if (name.text.isEmpty || desc.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Harap isi semua data")));
+    if (name.text.isEmpty || desc.text.isEmpty || phone.text.isEmpty || price.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Harap isi semua kolom wajib (termasuk telepon dan harga)")));
+      return;
+    }
+
+    if (desc.text.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Deskripsi minimal 10 karakter")));
+      return;
+    }
+
+    if (int.tryParse(price.text.replaceAll('.', '')) == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Harga tidak boleh 0")));
       return;
     }
 
@@ -266,11 +289,14 @@ class _PostPageState extends State<PostPage> {
         "location": location.text,
         "price": price.text.replaceAll('.', ''),
         "category": selectedCategory,
-        "image": _imageBase64 ?? "", // SIMPAN SEBAGAI BASE64
+        "image": _base64Images.isNotEmpty ? _base64Images.first : "",
+        "images": _base64Images,
         "author": authorName,
         "authorEmail": authorEmail,
         "latitude": _lat ?? 0.0,
         "longitude": _lng ?? 0.0,
+        "phone": phone.text,
+        "amenities": selectedAmenities,
       };
 
       if (isEditing && widget.docId != null) {
@@ -324,33 +350,65 @@ class _PostPageState extends State<PostPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 📸 FOTO
-            GestureDetector(
-              onTap: _showImageSourceDialog,
-              child: Container(
-                height: 180,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD7C5C0),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: _imageBase64 != null && _imageBase64!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.memory(
-                          base64Decode(_imageBase64!),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
+            // 📸 FOTO CAROUSEL
+            SizedBox(
+              height: 180,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _base64Images.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == _base64Images.length) {
+                    if (_base64Images.length >= 5) return const SizedBox();
+                    return GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: Container(
+                        width: 140,
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
                         ),
-                      )
-                    : const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_a_photo, size: 50),
-                          SizedBox(height: 10),
-                          Text("Tambahkan Foto Hotel"),
-                        ],
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                            SizedBox(height: 5),
+                            Text("Tambah", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
                       ),
+                    );
+                  }
+
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 240,
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                            image: MemoryImage(base64Decode(_base64Images[index])),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        right: 15,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _base64Images.removeAt(index)),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -457,6 +515,43 @@ class _PostPageState extends State<PostPage> {
               keyboardType: TextInputType.number,
               inputFormatters: [CurrencyInputFormatter()],
             ),
+            const SizedBox(height: 10),
+            _input(
+              context,
+              phone, 
+              "Nomor Telepon", 
+              Icons.phone,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Fasilitas",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: -8,
+              children: availableAmenities.map((amenity) {
+                final isSelected = selectedAmenities.contains(amenity);
+                return FilterChip(
+                  label: Text(amenity),
+                  selected: isSelected,
+                  selectedColor: Colors.red.shade100,
+                  checkmarkColor: Colors.red,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedAmenities.add(amenity);
+                      } else {
+                        selectedAmenities.remove(amenity);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

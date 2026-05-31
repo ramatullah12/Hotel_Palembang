@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/firestore_service.dart';
 import '../post/post_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/comment_widget.dart';
 
 class DetailPage extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -40,9 +42,71 @@ class DetailPage extends StatelessWidget {
         (data['image'] != null && data['image'].toString().isNotEmpty)
             ? data['image']
             : '';
+    final List<String> images = data['images'] != null ? List<String>.from(data['images']) : [];
+    if (images.isEmpty && imgUrl.isNotEmpty) {
+      images.add(imgUrl);
+    }
+    final String phone = data['phone'] ?? '';
+    final List<String> amenities = data['amenities'] != null ? List<String>.from(data['amenities']) : [];
 
     return Scaffold(
-
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Harga / Malam', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5))),
+                    Text(
+                      price,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFC62828)),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: phone.isNotEmpty ? () async {
+                  String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+                  if (cleanPhone.startsWith('0')) {
+                    cleanPhone = '62${cleanPhone.substring(1)}';
+                  }
+                  
+                  final url = Uri.parse('https://wa.me/$cleanPhone');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak dapat membuka WhatsApp')));
+                    }
+                  }
+                } : null,
+                icon: const Icon(Icons.chat),
+                label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366), // Warna hijau khas WhatsApp
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           // ── SLIVER APP BAR (GAMBAR) ─────────────────────
@@ -52,33 +116,100 @@ class DetailPage extends StatelessWidget {
             backgroundColor: const Color(0xFFC62828),
             iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
-                  background: imgUrl.isEmpty
+                  background: images.isEmpty
                   ? Container(
                       color: Theme.of(context).colorScheme.surface,
                       child: const Icon(Icons.hotel,
                           size: 80, color: Colors.grey),
                     )
-                  : imgUrl.startsWith('http')
-                      ? Image.network(
-                          imgUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.hotel,
-                                size: 80, color: Colors.grey),
-                          ),
-                        )
-                      : Image.memory(
-                          base64Decode(imgUrl),
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.hotel,
-                                size: 80, color: Colors.grey),
-                          ),
-                        ),
+                  : PageView.builder(
+                      itemCount: images.length,
+                      itemBuilder: (context, index) {
+                        String currentImg = images[index];
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            currentImg.startsWith('http')
+                                ? Image.network(
+                                    currentImg,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.hotel,
+                                          size: 80, color: Colors.grey),
+                                    ),
+                                  )
+                                : Image.memory(
+                                    base64Decode(currentImg),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.hotel,
+                                          size: 80, color: Colors.grey),
+                                    ),
+                                  ),
+                            if (images.length > 1)
+                              Positioned(
+                                bottom: 10,
+                                right: 10,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Text(
+                                    '${index + 1} / ${images.length}',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
             ),
             actions: [
+              // Tombol Favorit
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirestoreService().favorites.doc(docId).snapshots(),
+                builder: (context, snapshot) {
+                  bool isFavorite = false;
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    isFavorite = true;
+                  }
+
+                  return IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white,
+                    ),
+                    tooltip: 'Favorit',
+                    onPressed: () async {
+                      try {
+                        if (isFavorite) {
+                          await FirestoreService().deleteFavorite(docId);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Dihapus dari Favorit")));
+                          }
+                        } else {
+                          // Copy data but with docId attached for saving
+                          Map<String, dynamic> favData = Map.from(data);
+                          favData['id'] = docId;
+                          await FirestoreService().addFavorite(docId, favData);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ditambahkan ke Favorit")));
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: $e")));
+                        }
+                      }
+                    },
+                  );
+                }
+              ),
               // Tombol Edit
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.white),
@@ -139,6 +270,44 @@ class DetailPage extends StatelessWidget {
                     ],
                   ),
 
+                  // Rating Bintang Dinamis
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance.collection('hotels').doc(docId).collection('comments').snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const SizedBox.shrink(); // Sembunyikan jika tidak ada ulasan
+                      }
+                      
+                      final docs = snapshot.data!.docs;
+                      double totalRating = 0;
+                      int ratingCount = 0;
+                      
+                      for (var doc in docs) {
+                        final commentData = doc.data() as Map<String, dynamic>;
+                        if (commentData['rating'] != null) {
+                          totalRating += (commentData['rating'] as num).toDouble();
+                          ratingCount++;
+                        }
+                      }
+                      
+                      if (ratingCount == 0) return const SizedBox.shrink();
+                      
+                      final avgRating = totalRating / ratingCount;
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 20),
+                            const SizedBox(width: 4),
+                            Text(avgRating.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(' ($ratingCount Ulasan)', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
                   const SizedBox(height: 12),
 
                   // Lokasi
@@ -180,21 +349,31 @@ class DetailPage extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   // Harga
-                  Row(
-                    children: [
-                      const Icon(Icons.attach_money,
-                          size: 18, color: Colors.green),
-                      const SizedBox(width: 6),
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    price,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
+
+                  if (amenities.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    const Text('Fasilitas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: amenities.map((a) => Chip(
+                        label: Text(a, style: TextStyle(fontSize: 12, color: Colors.red.shade900, fontWeight: FontWeight.bold)),
+                        backgroundColor: Colors.red.shade50,
+                        side: BorderSide.none,
+                      )).toList(),
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
                   const Divider(),
@@ -248,50 +427,8 @@ class DetailPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 30),
-
-                  // Tombol Edit bawah
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PostPage(existingHotel: data, docId: docId),
-                        ),
-                      ),
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit Hotel'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFC62828),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Tombol Hapus bawah
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showDeleteDialog(context),
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      label: const Text('Hapus Hotel',
-                          style: TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
+                  const Divider(),
+                  CommentWidget(hotelId: docId),
                 ],
               ),
             ),
