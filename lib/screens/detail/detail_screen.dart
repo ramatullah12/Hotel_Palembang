@@ -30,26 +30,34 @@ class DetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String name = data['name'] ?? 'Detail Hotel';
-    final String desc = data['desc'] ?? 'Tidak ada deskripsi.';
-    final String location = data['location'] ?? '-';
-    final String priceRaw = data['price']?.toString() ?? '0';
-    final String price = NumberFormat.currency(locale: 'id', symbol: 'Rp. ', decimalDigits: 0).format(num.tryParse(priceRaw) ?? 0);
-    final String category = data['category'] ?? 'Hotel';
-    final String author = data['author'] ?? 'User';
-    final String authorEmail = data['authorEmail'] ?? '';
-    final String imgUrl =
-        (data['image'] != null && data['image'].toString().isNotEmpty)
-            ? data['image']
-            : '';
-    final List<String> images = data['images'] != null ? List<String>.from(data['images']) : [];
-    if (images.isEmpty && imgUrl.isNotEmpty) {
-      images.add(imgUrl);
-    }
-    final String phone = data['phone'] ?? '';
-    final List<String> amenities = data['amenities'] != null ? List<String>.from(data['amenities']) : [];
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('hotels').doc(docId).snapshots(),
+      builder: (context, snapshot) {
+        Map<String, dynamic> currentData = data;
+        if (snapshot.hasData && snapshot.data!.exists) {
+          currentData = snapshot.data!.data() as Map<String, dynamic>;
+        }
 
-    return Scaffold(
+        final String name = currentData['name'] ?? 'Detail Hotel';
+        final String desc = currentData['desc'] ?? 'Tidak ada deskripsi.';
+        final String location = currentData['location'] ?? '-';
+        final String priceRaw = currentData['price']?.toString() ?? '0';
+        final String price = NumberFormat.currency(locale: 'id', symbol: 'Rp. ', decimalDigits: 0).format(num.tryParse(priceRaw) ?? 0);
+        final String category = currentData['category'] ?? 'Hotel';
+        final String author = currentData['author'] ?? 'User';
+        final String authorEmail = currentData['authorEmail'] ?? '';
+        final String imgUrl =
+            (currentData['image'] != null && currentData['image'].toString().isNotEmpty)
+                ? currentData['image']
+                : '';
+        final List<String> images = currentData['images'] != null ? List<String>.from(currentData['images']) : [];
+        if (images.isEmpty && imgUrl.isNotEmpty) {
+          images.add(imgUrl);
+        }
+        final String phone = currentData['phone'] ?? '';
+        final List<String> amenities = currentData['amenities'] != null ? List<String>.from(currentData['amenities']) : [];
+
+        return Scaffold(
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -86,9 +94,13 @@ class DetailPage extends StatelessWidget {
                   }
                   
                   final url = Uri.parse('https://wa.me/$cleanPhone');
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  } else {
+                  try {
+                    bool launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+                    if (!launched) {
+                      final fallbackUrl = Uri.parse('whatsapp://send?phone=$cleanPhone');
+                      await launchUrl(fallbackUrl, mode: LaunchMode.externalApplication);
+                    }
+                  } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak dapat membuka WhatsApp')));
                     }
@@ -194,7 +206,7 @@ class DetailPage extends StatelessWidget {
                           }
                         } else {
                           // Copy data but with docId attached for saving
-                          Map<String, dynamic> favData = Map.from(data);
+                          Map<String, dynamic> favData = Map.from(currentData);
                           favData['id'] = docId;
                           await FirestoreService().addFavorite(docId, favData);
                           if (context.mounted) {
@@ -218,7 +230,7 @@ class DetailPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        PostPage(existingHotel: data, docId: docId),
+                        PostPage(existingHotel: currentData, docId: docId),
                   ),
                 ),
               ),
@@ -313,18 +325,22 @@ class DetailPage extends StatelessWidget {
                   // Lokasi
                   GestureDetector(
                     onTap: () async {
-                      final lat = data['latitude'];
-                      final lng = data['longitude'];
-                      Uri url;
+                      final lat = currentData['latitude'];
+                      final lng = currentData['longitude'];
+                      final Uri url;
                       if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
-                        url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                        url = Uri.parse('https://maps.google.com/?q=$lat,$lng');
                       } else {
                         final query = Uri.encodeComponent(location);
-                        url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                        url = Uri.parse('https://maps.google.com/?q=$query');
                       }
 
-                      if (await canLaunchUrl(url)) {
+                      try {
                         await launchUrl(url, mode: LaunchMode.externalApplication);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Tidak dapat membuka Google Maps: $e')));
+                        }
                       }
                     },
                     child: Row(
@@ -436,7 +452,9 @@ class DetailPage extends StatelessWidget {
         ],
       ),
     );
-  }
+  },
+);
+}
 
   void _showDeleteDialog(BuildContext context) {
     showDialog(
