@@ -1,51 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../auth/login_screen.dart';
 import '../home/home_screen.dart';
+import '../../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() =>
-      _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState
-    extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    checkLogin();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    _animationController.forward();
+    _checkAuth();
   }
 
-  Future<void> checkLogin() async {
-    await Future.delayed(
-      const Duration(seconds: 3),
-    );
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
-    User? user =
-        FirebaseAuth.instance.currentUser;
+  void _checkAuth() async {
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
+    final user = _authService.currentUser;
+
     if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              const HomePage(),
-        ),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              const LoginPage(),
-        ),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     }
   }
@@ -53,46 +56,55 @@ class _SplashScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
-      body: Center(
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.hotel,
-              color: Colors.white,
-              size: 100,
-            ),
-
-            SizedBox(height: 20),
-
-            Text(
-              'Hotel Palembang',
-              style: TextStyle(
-                fontSize: 28,
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.hotel,
+                size: 100,
                 color: Colors.white,
-                fontWeight:
-                    FontWeight.bold,
               ),
-            ),
 
-            SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-            Text(
-              'Temukan Hotel Terbaik',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
+              const Text(
+                'Hotel Palembang',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
 
-            SizedBox(height: 30),
+              const SizedBox(height: 10),
 
-            CircularProgressIndicator(
-              color: Colors.white,
-            ),
-          ],
+              const Text(
+                'Booking Hotel Mudah & Cepat',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              const CircularProgressIndicator(
+                color: Colors.white,
+              ),
+            ],
+          ),
         ),
       ),
     );
