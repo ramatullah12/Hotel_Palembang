@@ -37,7 +37,7 @@ class _CommentWidgetState extends State<CommentWidget> {
 
     try {
       String authorName = "User";
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_user!.uid).get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_user.uid).get();
       if (userDoc.exists) {
         authorName = userDoc.data()?['name'] ?? "User";
       }
@@ -57,7 +57,7 @@ class _CommentWidgetState extends State<CommentWidget> {
         });
       } else {
         await commentRef.add({
-          'uid': _user!.uid,
+          'uid': _user.uid,
           'authorName': authorName,
           'text': finalTextInput,
           'timestamp': FieldValue.serverTimestamp(),
@@ -137,7 +137,7 @@ class _CommentWidgetState extends State<CommentWidget> {
                 radius: isReply ? 14 : 18,
                 backgroundColor: Colors.red.shade100,
                 child: Text(
-                  (data['authorName'] ?? 'U')[0].toUpperCase(),
+                  ((data['authorName'] ?? '').isNotEmpty ? data['authorName'] : 'U')[0].toUpperCase(),
                   style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: isReply ? 12 : 14),
                 ),
               ),
