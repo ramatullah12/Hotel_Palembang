@@ -84,7 +84,7 @@ class HotelCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: StreamBuilder<DocumentSnapshot>(
-                      stream: FirestoreService().favorites.doc(hotel.id).snapshots(),
+                      stream: FirestoreService().getFavoriteStatus(hotel.id),
                       builder: (context, snapshot) {
                         bool isFavorite = false;
                         if (snapshot.hasData && snapshot.data!.exists) {

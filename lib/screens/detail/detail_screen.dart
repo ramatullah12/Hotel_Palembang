@@ -184,7 +184,7 @@ class DetailPage extends StatelessWidget {
             actions: [
               // Tombol Favorit
               StreamBuilder<DocumentSnapshot>(
-                stream: FirestoreService().favorites.doc(docId).snapshots(),
+                stream: FirestoreService().getFavoriteStatus(docId),
                 builder: (context, snapshot) {
                   bool isFavorite = false;
                   if (snapshot.hasData && snapshot.data!.exists) {
@@ -205,9 +205,7 @@ class DetailPage extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Dihapus dari Favorit")));
                           }
                         } else {
-                          // Copy data but with docId attached for saving
                           Map<String, dynamic> favData = Map.from(currentData);
-                          favData['id'] = docId;
                           await FirestoreService().addFavorite(docId, favData);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ditambahkan ke Favorit")));
@@ -471,6 +469,7 @@ class DetailPage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              // deleteHotel sudah otomatis hapus semua favorit terkait
               await FirestoreService().deleteHotel(docId);
               if (context.mounted) {
                 Navigator.pop(ctx);

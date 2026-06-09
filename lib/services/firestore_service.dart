@@ -1,46 +1,61 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  CollectionReference get hotels =>
-      _firestore.collection('hotels');
+  String? get _uid => _auth.currentUser?.uid;
 
-  CollectionReference get users =>
-      _firestore.collection('users');
+  CollectionReference get hotels => _firestore.collection('hotels');
+  CollectionReference get users => _firestore.collection('users');
+  CollectionReference get comments => _firestore.collection('comments');
+  CollectionReference get favorites => _firestore.collection('favorites');
 
-  CollectionReference get comments =>
-      _firestore.collection('comments');
+  // ── HOTEL ────────────────────────────────────────────────
+  Stream<QuerySnapshot> getHotels() => hotels.snapshots();
 
-  CollectionReference get favorites =>
-      _firestore.collection('favorites');
+  Future<void> addHotel(Map<String, dynamic> data) => hotels.add(data);
 
-  Stream<QuerySnapshot> getHotels() {
-    return hotels.snapshots();
+  Future<void> updateHotel(String docId, Map<String, dynamic> data) =>
+      hotels.doc(docId).update(data);
+
+  /// Hapus hotel beserta semua favorit yang merujuk ke hotel ini
+  Future<void> deleteHotel(String docId) async {
+    // Hapus semua dokumen favorit yang punya field hotelId == docId
+    final favSnap = await favorites
+        .where('hotelId', isEqualTo: docId)
+        .get();
+    final batch = _firestore.batch();
+    for (final doc in favSnap.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(hotels.doc(docId));
+    await batch.commit();
   }
 
-  Future<void> addHotel(Map<String, dynamic> data) {
-    return hotels.add(data);
-  }
+  // ── FAVORIT (per-user) ───────────────────────────────────
+  String _favDocId(String hotelId) => '${_uid}_$hotelId';
 
-  Future<void> updateHotel(String docId, Map<String, dynamic> data) {
-    return hotels.doc(docId).update(data);
-  }
-
-  Future<void> deleteHotel(String docId) {
-    return hotels.doc(docId).delete();
-  }
-
+  /// Stream favorit hanya milik user yang sedang login
   Stream<QuerySnapshot> getFavorite() {
-    return favorites.snapshots();
+    if (_uid == null) return const Stream.empty();
+    return favorites.where('userId', isEqualTo: _uid).snapshots();
   }
 
-  Future<void> addFavorite(String docId, Map<String, dynamic> data) {
-    return favorites.doc(docId).set(data);
+  /// Cek apakah hotel tertentu sudah difavoritkan oleh user aktif
+  Stream<DocumentSnapshot> getFavoriteStatus(String hotelId) {
+    return favorites.doc(_favDocId(hotelId)).snapshots();
   }
 
-  Future<void> deleteFavorite(String docId) {
-    return favorites.doc(docId).delete();
+  Future<void> addFavorite(String hotelId, Map<String, dynamic> data) {
+    final favData = Map<String, dynamic>.from(data);
+    favData['hotelId'] = hotelId;
+    favData['userId'] = _uid;
+    return favorites.doc(_favDocId(hotelId)).set(favData);
   }
-}
+
+  Future<void> deleteFavorite(String hotelId) {
+    return favorites.doc(_favDocId(hotelId)).delete();
+  }
+}

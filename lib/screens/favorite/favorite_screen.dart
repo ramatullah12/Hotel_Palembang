@@ -43,17 +43,17 @@ class FavoritePage extends StatelessWidget {
             itemCount: data.length,
             itemBuilder: (context, i) {
               var f = data[i].data() as Map<String, dynamic>;
-              String imgUrl = f['image'] != null && f['image'].toString().isNotEmpty 
-                  ? f['image'] 
-                  : "https://picsum.photos/400/200";
+              // Gunakan field 'hotelId' sebagai ID hotel yang sebenarnya
+              // (data[i].id adalah ID dokumen favorit = userId_hotelId, bukan hotelId)
+              final String hotelId = (f['hotelId'] ?? data[i].id) as String;
 
               return HotelCard(
-                hotel: HotelModel.fromMap(data[i].id, f),
+                hotel: HotelModel.fromMap(hotelId, f),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => DetailPage(data: f, docId: data[i].id),
+                      builder: (_) => DetailPage(data: f, docId: hotelId),
                     ),
                   );
                 },
