@@ -217,7 +217,7 @@ class _CommentWidgetState extends State<CommentWidget> {
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () => _deleteComment(doc.id),
-                  child: const Text('Hapus', style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600)),
+                  child: const Text('Delete', style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600)),
                 ),
               ]
             ],

@@ -109,7 +109,7 @@ class DetailPage extends StatelessWidget {
                 icon: const Icon(Icons.chat),
                 label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366), // Warna hijau khas WhatsApp
+                  backgroundColor: const Color.fromARGB(255, 245, 2, 2), // Warna hijau khas WhatsApp
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -69,14 +69,14 @@ class ContactPage extends StatelessWidget {
                     context,
                     Icons.person_outline,
                     'Nama',
-                    'Ramatullah',
+                    'Yuan Ramatullah',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(
                     context,
                     Icons.email_outlined,
                     'Email',
-                    'ramatullah@email.com',
+                    'ramatullah@gmail.com',
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _infoTile(

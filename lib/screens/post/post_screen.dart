@@ -89,7 +89,7 @@ class _PostPageState extends State<PostPage> {
     }
   }
 
-  final List<String> categories = ["Hotel", "Resort", "Budget", "Luxury"];
+  final List<String> categories = ["Hotel", "Resort", "Budget", "Luxury","local"];
   final List<String> availableAmenities = ["WiFi", "AC", "Kolam Renang", "Parkir", "Restoran", "Resepsionis 24 Jam"];
 
   List<String> _base64Images = [];

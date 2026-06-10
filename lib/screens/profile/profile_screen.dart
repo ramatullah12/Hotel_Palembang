@@ -22,7 +22,7 @@ class ProfilePage extends StatelessWidget {
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFC62828),
-        title: const Text("Profil Saya"),
+        title: const Text("Profil"),
         centerTitle: true,
       ),
 
